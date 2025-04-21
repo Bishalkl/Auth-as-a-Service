@@ -1,18 +1,18 @@
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 	"log"
 
 	"github.com/bishalcode869/Auth-as-a-Service.git/configs"
 	"github.com/bishalcode869/Auth-as-a-Service.git/internal/database"
-	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type AppContainer struct {
-	DB    *gorm.DB
-	Redis *redis.Client
+	DB           *gorm.DB
+	RedisService database.RedisService
 }
 
 func InitalizeApp() (*AppContainer, error) {
@@ -31,13 +31,17 @@ func InitalizeApp() (*AppContainer, error) {
 
 	// Connect to Redis
 	log.Println("🔗 Connecting to Redis...")
-	redisService := database.NewRedisService()
-	redisClient := redisService.GetClient()
+	ctx := context.Background()
+	redisService, err := database.NewRedisService(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("❌ Failed to connect to Redis: %w", err)
+
+	}
 
 	// Return app container
 	return &AppContainer{
-		DB:    db,
-		Redis: redisClient,
+		DB:           db,
+		RedisService: redisService,
 	}, nil
 
 }

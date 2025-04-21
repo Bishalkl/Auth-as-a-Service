@@ -14,41 +14,39 @@ import (
 type RedisService interface {
 	GetClient() *redis.Client
 	Ping() error
+	Close() error
 }
 
-// redisClient struct to implement RedisService
+// redisClient implements RedisService
 type redisClient struct {
 	client *redis.Client
 	ctx    context.Context
 }
 
 // NewRedisService creates a new RedisService instance
-func NewRedisService() RedisService {
+func NewRedisService(ctx context.Context) (RedisService, error) {
 	cfg := configs.Config
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%s", cfg.RedisHost, cfg.RedisPort),
-		Password: "", // add if needed
-		DB:       0,  // default DB
+		Password: cfg.RedisPassword, // Now from config
+		DB:       0,
 	})
 
-	ctx := context.Background()
-
-	// Optional: Check the connection with a timeout
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	_, err := rdb.Ping(ctxWithTimeout).Result()
 	if err != nil {
-		log.Fatalf("❌ Redis connection failed: %v", err)
-	} else {
-		log.Println("✅ Successfully connected to Redis.")
+		return nil, fmt.Errorf("❌ Redis connection failed: %w", err)
 	}
+
+	log.Println("✅ Successfully connected to Redis.")
 
 	return &redisClient{
 		client: rdb,
 		ctx:    ctx,
-	}
+	}, nil
 }
 
 // GetClient returns the Redis client
@@ -60,4 +58,9 @@ func (r *redisClient) GetClient() *redis.Client {
 func (r *redisClient) Ping() error {
 	_, err := r.client.Ping(r.ctx).Result()
 	return err
+}
+
+// Close gracefully closes Redis connection
+func (r *redisClient) Close() error {
+	return r.client.Close()
 }

@@ -19,6 +19,7 @@ type AppConfig struct {
 	DBName                   string
 	RedisHost                string
 	RedisPort                string
+	RedisPassword            string
 	JWTSecret                string
 	AccessTokenExpireMinutes string
 	RefreshTokenExpireHours  string
@@ -47,6 +48,7 @@ func LoadEnv() {
 		DBName:                   MustGetEnvOrDefault("DB_NAME", "auth_service"),
 		RedisHost:                MustGetEnvOrDefault("REDIS_HOST", "localhost"),
 		RedisPort:                MustGetEnvOrDefault("REDIS_PORT", "6379"),
+		RedisPassword:            MustGetEnvOrDefault("REDIS_PASSWORD", ""),
 		JWTSecret:                MustGetEnvOrDefault("JWT_SECRET", "supersecretkey"),
 		AccessTokenExpireMinutes: MustGetEnvOrDefault("ACCESS_TOKEN_EXPIRE_MINUTES", "15"),
 		RefreshTokenExpireHours:  MustGetEnvOrDefault("REFRESH_TOKEN_EXPIRE_HOURS", "24"),
