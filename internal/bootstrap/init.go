@@ -17,11 +17,10 @@ type AppContainer struct {
 
 func InitalizeApp() (*AppContainer, error) {
 	// Load configuration
-	// Load configuration
 	log.Println("🔧 Loading configuration...")
 	configs.LoadEnv()
 
-	// Connect to the PostgreSQL
+	// Connect to the PostgreSQL db
 	log.Println("💾 Connecting to the database...")
 	dbService := database.NewDBService()
 	db, err := dbService.Connect()
@@ -29,7 +28,7 @@ func InitalizeApp() (*AppContainer, error) {
 		return nil, fmt.Errorf("❌ Failed to connect to database: %w", err)
 	}
 
-	// Connect to Redis
+	// Connect to Redis db
 	log.Println("🔗 Connecting to Redis...")
 	ctx := context.Background()
 	redisService, err := database.NewRedisService(ctx)

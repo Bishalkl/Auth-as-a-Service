@@ -30,7 +30,7 @@ func main() {
 		port = "8080"
 	}
 
-	log.Println("Server is running at http://localhost:8080")
+	log.Printf("Server is running at http://localhost:%s", port)
 	if err := router.Run(":" + port); err != nil {
 		log.Fatal("Error starting server:", err)
 	}
