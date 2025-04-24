@@ -11,5 +11,5 @@ CREATE TABLE user_roles (
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE user_roles If EXISTS;
+DROP TABLE IF EXISTS user_roles;
 -- +goose StatementEnd

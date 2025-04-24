@@ -28,6 +28,13 @@ func InitalizeApp() (*AppContainer, error) {
 		return nil, fmt.Errorf("❌ Failed to connect to database: %w", err)
 	}
 
+	// // AutoMigrate all models (TEMP use only)
+	// log.Println("🔄 Running auto migration for models...")
+	// err = migrateAutoModels(db)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("❌ Failed to auto-migrate authentication models: %w", err)
+	// }
+
 	// Connect to Redis db
 	log.Println("🔗 Connecting to Redis...")
 	ctx := context.Background()
@@ -44,3 +51,14 @@ func InitalizeApp() (*AppContainer, error) {
 	}, nil
 
 }
+
+// // function for automigrate
+// func migrateAutoModels(db *gorm.DB) error {
+// 	// Auto migrate
+// 	err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}, &models.UserRole{})
+// 	if err != nil {
+// 		return fmt.Errorf("❌ Error migrating auth models: %w", err)
+// 	}
+// 	log.Println("✅ Auth models migrated successfully")
+// 	return nil
+// }
