@@ -6,6 +6,7 @@ import (
 
 	"github.com/bishalcode869/Auth-as-a-Service.git/configs"
 	"github.com/bishalcode869/Auth-as-a-Service.git/internal/bootstrap"
+	"github.com/bishalcode869/Auth-as-a-Service.git/internal/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,6 +19,9 @@ func main() {
 
 	//Initialize Gin router
 	router := gin.Default()
+
+	// Global middleware
+	router.Use(middleware.Errorhandler())
 
 	// Health check or welcome route
 	router.GET("/", func(ctx *gin.Context) {
