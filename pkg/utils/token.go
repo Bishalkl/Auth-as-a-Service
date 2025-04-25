@@ -8,32 +8,38 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-// Custom claims for JWT
+// Claims defines the structure for JWT payload
 type Claims struct {
 	UserID uint   `json:"user_id"`
 	Email  string `json:"email"`
 	jwt.StandardClaims
 }
 
-// GenerateJWT generates a JWT access token for the user
-func GenerateJWT(userID uint, email string) (string, error) {
-	// Get expiration time from config (AccessTokenExpireMinutes)
-	expirationTime := time.Duration(configs.Config.AccessTokenExpireMinutes) * time.Minute
+// GenerateAccessToken generates a short-lived access token
+func GenerateAccessToken(userID uint, email string) (string, error) {
+	expiration := time.Duration(configs.Config.AccessTokenExpireMinutes) * time.Minute
+	return generateToken(userID, email, expiration)
+}
 
-	// Create claims
+// GenerateRefreshToken generates a longer-lived refresh token
+func GenerateRefreshToken(userID uint, email string) (string, error) {
+	expiration := time.Duration(configs.Config.RefreshTokenExpireHours) * time.Hour
+	return generateToken(userID, email, expiration)
+}
+
+// Internal function for DRY token generation
+func generateToken(userID uint, email string, duration time.Duration) (string, error) {
 	claims := &Claims{
 		UserID: userID,
 		Email:  email,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(expirationTime).Unix(),
+			ExpiresAt: time.Now().Add(duration).Unix(),
 			Issuer:    "Auth-as-a-Service",
 		},
 	}
 
-	// Create a new token with claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// Sign the token with the JWT secret key
 	signedToken, err := token.SignedString([]byte(configs.Config.JWTSecret))
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %v", err)
@@ -42,19 +48,16 @@ func GenerateJWT(userID uint, email string) (string, error) {
 	return signedToken, nil
 }
 
-// ValidateToken validates the JWT and returns the claims
+// ValidateToken verifies token validity and returns the claims
 func ValidateToken(tokenStr string) (*Claims, error) {
-	// Parse and validate the token using the JWT secret
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(configs.Config.JWTSecret), nil
 	})
 
-	// Handle any errors in token parsing
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse token: %v", err)
 	}
 
-	// Check if the claims are valid
 	claims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {
 		return nil, fmt.Errorf("invalid token")

@@ -1,8 +1,6 @@
 package models
 
-import (
-	"time"
-)
+import "time"
 
 type User struct {
 	ID           string    `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
