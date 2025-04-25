@@ -3,6 +3,7 @@ package configs
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -21,8 +22,8 @@ type AppConfig struct {
 	RedisPort                string
 	RedisPassword            string
 	JWTSecret                string
-	AccessTokenExpireMinutes string
-	RefreshTokenExpireHours  string
+	AccessTokenExpireMinutes int
+	RefreshTokenExpireHours  int
 	MailAPIKey               string
 	MailSender               string
 }
@@ -50,8 +51,8 @@ func LoadEnv() {
 		RedisPort:                MustGetEnvOrDefault("REDIS_PORT", "6379"),
 		RedisPassword:            MustGetEnvOrDefault("REDIS_PASSWORD", ""),
 		JWTSecret:                MustGetEnvOrDefault("JWT_SECRET", "supersecretkey"),
-		AccessTokenExpireMinutes: MustGetEnvOrDefault("ACCESS_TOKEN_EXPIRE_MINUTES", "15"),
-		RefreshTokenExpireHours:  MustGetEnvOrDefault("REFRESH_TOKEN_EXPIRE_HOURS", "24"),
+		AccessTokenExpireMinutes: MustGetEnvAsInt("ACCESS_TOKEN_EXPIRE_MINUTES", 15),
+		RefreshTokenExpireHours:  MustGetEnvAsInt("REFRESH_TOKEN_EXPIRE_HOURS", 24),
 		MailAPIKey:               MustGetEnvOrDefault("MAIL_API_KEY", ""),
 		MailSender:               MustGetEnvOrDefault("MAIL_SENDER", ""),
 	}
@@ -64,4 +65,20 @@ func MustGetEnvOrDefault(key, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+// MustGetEnvAsInt returns env var as an int or fallback if not set or conversion fails
+func MustGetEnvAsInt(key string, fallback int) int {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+
+	// Try to convert the value to an integer
+	intValue, err := strconv.Atoi(value)
+	if err != nil {
+		return fallback
+	}
+
+	return intValue
 }
