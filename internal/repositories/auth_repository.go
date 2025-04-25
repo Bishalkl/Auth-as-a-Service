@@ -6,18 +6,40 @@ import (
 )
 
 type AuthRepository interface {
-	UserExists(email string) (bool, error)
-	CreateUser(user *models.User) error
+	CreateUser(user *models.User) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
-	GetUserByID(userID uint) (*models.User, error)
+	GetUserByUsername(username string) (*models.User, error)
 }
 
-// struct
-type UserRepositoryImpl struct {
+type AuthRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-// Constructor to initialize UserRepositoryImpl
-func NewUserRepository(DB *gorm.DB) AuthRepository {
-	return &UserRepositoryImpl{DB: DB}
+func NewAuthRepository(db *gorm.DB) AuthRepository {
+	return &AuthRepositoryImpl{
+		DB: db,
+	}
+}
+
+func (repo *AuthRepositoryImpl) CreateUser(user *models.User) (*models.User, error) {
+	if err := repo.DB.Create(user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (repo *AuthRepositoryImpl) GetUserByEmail(email string) (*models.User, error) {
+	var user models.User
+	if err := repo.DB.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (repo *AuthRepositoryImpl) GetUserByUsername(username string) (*models.User, error) {
+	var user models.User
+	if err := repo.DB.Where("username = ? ", username).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

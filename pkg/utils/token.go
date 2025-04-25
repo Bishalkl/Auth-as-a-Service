@@ -10,25 +10,25 @@ import (
 
 // Claims defines the structure for JWT payload
 type Claims struct {
-	UserID uint   `json:"user_id"`
+	UserID string `json:"user_id"`
 	Email  string `json:"email"`
 	jwt.StandardClaims
 }
 
 // GenerateAccessToken generates a short-lived access token
-func GenerateAccessToken(userID uint, email string) (string, error) {
+func GenerateAccessToken(userID string, email string) (string, error) {
 	expiration := time.Duration(configs.Config.AccessTokenExpireMinutes) * time.Minute
 	return generateToken(userID, email, expiration)
 }
 
 // GenerateRefreshToken generates a longer-lived refresh token
-func GenerateRefreshToken(userID uint, email string) (string, error) {
+func GenerateRefreshToken(userID string, email string) (string, error) {
 	expiration := time.Duration(configs.Config.RefreshTokenExpireHours) * time.Hour
 	return generateToken(userID, email, expiration)
 }
 
 // Internal function for DRY token generation
-func generateToken(userID uint, email string, duration time.Duration) (string, error) {
+func generateToken(userID string, email string, duration time.Duration) (string, error) {
 	claims := &Claims{
 		UserID: userID,
 		Email:  email,
