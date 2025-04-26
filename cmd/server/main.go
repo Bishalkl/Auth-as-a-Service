@@ -7,12 +7,13 @@ import (
 	"github.com/bishalcode869/Auth-as-a-Service.git/configs"
 	"github.com/bishalcode869/Auth-as-a-Service.git/internal/bootstrap"
 	"github.com/bishalcode869/Auth-as-a-Service.git/internal/middleware"
+	"github.com/bishalcode869/Auth-as-a-Service.git/internal/routes"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	// Initialize application (config, DB, controller, etc.)
-	_, err := bootstrap.InitalizeApp()
+	app, err := bootstrap.InitalizeApp()
 	if err != nil {
 		log.Fatal("❌ App initialization failed:", err)
 	}
@@ -27,6 +28,8 @@ func main() {
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"message": "🚀 Hello, Auth-as-a-Service is working!"})
 	})
+
+	routes.SetupAuthRoutes(router, app.Handler.Auth)
 
 	// Get port from config (with fallback)
 	port := configs.Config.Port

@@ -11,13 +11,13 @@ type AuthHandler struct {
 	AuthService services.AuthService
 }
 
-func NewAuthHanlder(authService services.AuthService) *AuthHandler {
+func NewAuthHandler(authService services.AuthService) *AuthHandler {
 	return &AuthHandler{
 		AuthService: authService,
 	}
 }
 
-// Register
+// Register handles user registration
 func (h *AuthHandler) Register(c *gin.Context) {
 	var input struct {
 		Username string `json:"username" binding:"required"`
@@ -25,14 +25,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		Email    string `json:"email" binding:"required,email"`
 	}
 
-	// Bind JSON data to input struct
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	// Call the service layer to register the user
-	createdUser, token, err := h.AuthService.RegisterUser(input.Username, input.Password, input.Email)
+	user, token, err := h.AuthService.RegisterUser(input.Username, input.Password, input.Email)
 	if err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return
@@ -41,34 +39,41 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User registered successfully",
 		"token":   token,
-		"user":    createdUser,
+		"user": gin.H{
+			"id":       user.ID,
+			"username": user.Username,
+			"email":    user.Email,
+		},
 	})
 }
 
 // Login authenticates a user and returns a JWT token
 func (h *AuthHandler) Login(c *gin.Context) {
-	var input struct {
-		Username string `json:"username"`
-		Email    string `json:"email"`
-		Password string `json:"password" binding:"required"`
+	type LoginRequest struct {
+		Identifier string `json:"identifier" binding:"required"` // email or username
+		Password   string `json:"password" binding:"required"`
 	}
 
-	// Bind JSON data to input struct
-	if err := c.ShouldBindJSON(&input); err != nil {
+	var req LoginRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	// Authenticate the user using the service layer
-	user, token, err := h.AuthService.LoginUser(input.Username, input.Email, input.Password)
+	user, token, err := h.AuthService.LoginUser(req.Identifier, req.Password)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username/email or"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"username": user.Username,
-		"message":  "Login successful",
-		"token":    token,
+		"message": "Login successful",
+		"token":   token,
+		"user": gin.H{
+			"id":       user.ID,
+			"username": user.Username,
+			"email":    user.Email,
+		},
 	})
 }

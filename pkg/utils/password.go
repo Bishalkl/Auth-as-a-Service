@@ -6,19 +6,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// HashPassoword
+// HashPassword hashes the plain text password
 func HashPassword(password string) (string, error) {
-	// Generate a hashed password
-	hashPassowrd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", fmt.Errorf("could not hash password: %v", err)
 	}
-	return string(hashPassowrd), nil
+	return string(hashedPassword), nil
 }
 
-// ComparePassword compares a plain password with a hashed password
-func ComparePassword(hashPassword, password string) bool {
-	// Compare the plain password with hashed password
-	err := bcrypt.CompareHashAndPassword([]byte(hashPassword), []byte(password))
+// ComparePassword compares a hashed password with a plain password
+func ComparePassword(hashedPassword, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	return err == nil
 }

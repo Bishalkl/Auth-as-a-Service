@@ -7,12 +7,20 @@ import (
 
 	"github.com/bishalcode869/Auth-as-a-Service.git/configs"
 	"github.com/bishalcode869/Auth-as-a-Service.git/internal/database"
+	"github.com/bishalcode869/Auth-as-a-Service.git/internal/handlers"
+	"github.com/bishalcode869/Auth-as-a-Service.git/internal/repositories"
+	"github.com/bishalcode869/Auth-as-a-Service.git/internal/services"
 	"gorm.io/gorm"
 )
+
+type Handlers struct {
+	Auth *handlers.AuthHandler
+}
 
 type AppContainer struct {
 	DB           *gorm.DB
 	RedisService database.RedisService
+	Handler      Handlers
 }
 
 func InitalizeApp() (*AppContainer, error) {
@@ -28,13 +36,6 @@ func InitalizeApp() (*AppContainer, error) {
 		return nil, fmt.Errorf("❌ Failed to connect to database: %w", err)
 	}
 
-	// // AutoMigrate all models (TEMP use only)
-	// log.Println("🔄 Running auto migration for models...")
-	// err = migrateAutoModels(db)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("❌ Failed to auto-migrate authentication models: %w", err)
-	// }
-
 	// Connect to Redis db
 	log.Println("🔗 Connecting to Redis...")
 	ctx := context.Background()
@@ -44,10 +45,32 @@ func InitalizeApp() (*AppContainer, error) {
 
 	}
 
+	// // AutoMigrate all models (TEMP use only)
+	// log.Println("🔄 Running auto migration for models...")
+	// err = migrateAutoModels(db)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("❌ Failed to auto-migrate authentication models: %w", err)
+	// }
+
+	// Initalize repositories
+	log.Println("📦 Initializing repositories...")
+	authRepo := repositories.NewAuthRepository(db)
+
+	// Initalize service
+	log.Println("🧠 Initializing services...")
+	authService := services.NewAuthService(authRepo)
+
+	// initalize handler
+	log.Println("🧠 Initializing services...")
+	authHandler := handlers.NewAuthHandler(authService)
+
 	// Return app container
 	return &AppContainer{
 		DB:           db,
 		RedisService: redisService,
+		Handler: Handlers{
+			Auth: authHandler,
+		},
 	}, nil
 
 }
