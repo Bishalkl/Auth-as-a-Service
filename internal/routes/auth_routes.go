@@ -11,5 +11,8 @@ func SetupAuthRoutes(router *gin.Engine, authHandler *handlers.AuthHandler) {
 	{
 		authRoutes.POST("/register", authHandler.Register)
 		authRoutes.POST("/login", authHandler.Login)
+
+		// // Add the new OTP verfication route
+		authRoutes.GET("/verify-email", authHandler.VerifyEmail)
 	}
 }

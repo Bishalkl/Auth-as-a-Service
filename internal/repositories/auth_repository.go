@@ -9,6 +9,7 @@ type AuthRepository interface {
 	CreateUser(user *models.User) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
 	GetUserByUsername(username string) (*models.User, error)
+	UpdateUser(user *models.User) (*models.User, error)
 }
 
 type AuthRepositoryImpl struct {
@@ -42,4 +43,11 @@ func (repo *AuthRepositoryImpl) GetUserByUsername(username string) (*models.User
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (repo *AuthRepositoryImpl) UpdateUser(user *models.User) (*models.User, error) {
+	if err := repo.DB.Save(user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
 }

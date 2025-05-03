@@ -58,7 +58,7 @@ func InitalizeApp() (*AppContainer, error) {
 
 	// Initalize service
 	log.Println("🧠 Initializing services...")
-	authService := services.NewAuthService(authRepo)
+	authService := services.NewAuthService(authRepo, redisService)
 
 	// initalize handler
 	log.Println("🧠 Initializing services...")

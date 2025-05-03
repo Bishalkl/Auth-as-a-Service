@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"fmt"
+	"log"
 	"net/http"
+	"regexp"
 
 	"github.com/bishalcode869/Auth-as-a-Service.git/internal/services"
 	"github.com/gin-gonic/gin"
@@ -76,4 +79,37 @@ func (h *AuthHandler) Login(c *gin.Context) {
 			"email":    user.Email,
 		},
 	})
+}
+
+// VerfiyEmail handles email verfication requests
+func (h *AuthHandler) VerifyEmail(c *gin.Context) {
+	// Extract verfication token from query params
+	token := c.DefaultQuery("token", "")
+	email := c.DefaultQuery("email", "")
+
+	if token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Token is required"})
+		return
+	}
+
+	// Validate the email format (optional, based on your requirements)
+	if !isValidEmail(email) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
+		return
+	}
+
+	// call the service method to verify the email using the token
+	err := h.AuthService.VerifyOtp(email, token)
+	if err != nil {
+		log.Printf("Error verifying email: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to verify email: %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Email verfied successfully"})
+}
+
+func isValidEmail(email string) bool {
+	re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	return re.MatchString(email)
 }

@@ -12,6 +12,9 @@ import (
 
 // RedisService defines methods for accessing Redis
 type RedisService interface {
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
+	Get(ctx context.Context, key string) (string, error)
+	Delete(ctx context.Context, key string) error
 	GetClient() *redis.Client
 	Ping() error
 	Close() error
@@ -47,6 +50,21 @@ func NewRedisService(ctx context.Context) (RedisService, error) {
 		client: rdb,
 		ctx:    ctx,
 	}, nil
+}
+
+// Set stores a value in Redis with an expiration time
+func (r *redisClient) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+	return r.client.Set(ctx, key, value, expiration).Err()
+}
+
+// Get retrieves a value from Redis by key
+func (r *redisClient) Get(ctx context.Context, key string) (string, error) {
+	return r.client.Get(ctx, key).Result()
+}
+
+// Delete store value from Redis
+func (r *redisClient) Delete(ctx context.Context, key string) error {
+	return r.client.Del(ctx, key).Err()
 }
 
 // GetClient returns the Redis client

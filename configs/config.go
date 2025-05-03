@@ -26,6 +26,10 @@ type AppConfig struct {
 	RefreshTokenExpireHours  int
 	MailAPIKey               string
 	MailSender               string
+	EmailAddress             string
+	EmailPassword            string
+	SMPTServer               string
+	SMPTPort                 int
 }
 
 // Config is the global config variable
@@ -55,6 +59,10 @@ func LoadEnv() {
 		RefreshTokenExpireHours:  MustGetEnvAsInt("REFRESH_TOKEN_EXPIRE_HOURS", 24),
 		MailAPIKey:               MustGetEnvOrDefault("MAIL_API_KEY", ""),
 		MailSender:               MustGetEnvOrDefault("MAIL_SENDER", ""),
+		EmailAddress:             MustGetEnvOrDefault("EMAIL_ADDRESS", "bishal123koirala@gmail.com"),
+		EmailPassword:            MustGetEnvOrDefault("EMAIL_PASSWORD", "fcnh cuzs iwby csxb"),
+		SMPTServer:               MustGetEnvOrDefault("SMTP_SERVER", "smtp.gmail.com"),
+		SMPTPort:                 MustGetEnvAsInt("SMPT_PORT", 587),
 	}
 }
 
