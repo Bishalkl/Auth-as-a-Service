@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"regexp"
 
 	"github.com/bishalcode869/Auth-as-a-Service.git/internal/services"
+	"github.com/bishalcode869/Auth-as-a-Service.git/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -93,7 +93,7 @@ func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 	}
 
 	// Validate the email format (optional, based on your requirements)
-	if !isValidEmail(email) {
+	if !utils.IsValidEmail(email) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
 		return
 	}
@@ -107,9 +107,4 @@ func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Email verfied successfully"})
-}
-
-func isValidEmail(email string) bool {
-	re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	return re.MatchString(email)
 }

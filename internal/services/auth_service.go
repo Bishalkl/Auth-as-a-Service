@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 
@@ -36,6 +35,7 @@ type AuthServiceImpl struct {
 	GenerateToken   func(string, string) (string, error)
 	SendEmail       func(string, string, string) error
 	OtpGenerator    func(int) (string, error)
+	ValidateEmail   func(string) bool
 	RedisClient     RedisStore
 }
 
@@ -47,14 +47,9 @@ func NewAuthService(authRepo repositories.AuthRepository, redis RedisStore) Auth
 		GenerateToken:   utils.GenerateAccessToken,
 		SendEmail:       utils.SendVerificationEmail,
 		OtpGenerator:    utils.GenerateOTP,
+		ValidateEmail:   utils.IsValidEmail,
 		RedisClient:     redis,
 	}
-}
-
-// isValidEmail checks if an email address is valid using regex
-func isValidEmail(email string) bool {
-	re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	return re.MatchString(email)
 }
 
 // userExists checks if a user exists by username or email
@@ -70,7 +65,7 @@ func (s *AuthServiceImpl) userExists(username, email string) error {
 	}
 
 	if email != "" {
-		if !isValidEmail(email) {
+		if !s.ValidateEmail(email) {
 			return errors.New("invalid email format")
 		}
 		foundEmail, err := s.AuthRepo.GetUserByEmail(email)
