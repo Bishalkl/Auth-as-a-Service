@@ -15,6 +15,8 @@ type RedisService interface {
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 	Get(ctx context.Context, key string) (string, error)
 	Delete(ctx context.Context, key string) error
+	Incr(ctx context.Context, key string) (int64, error)                            // Add this if needed for Incr operation
+	Expire(ctx context.Context, key string, expiration time.Duration) (bool, error) // Add Expire method
 	GetClient() *redis.Client
 	Ping() error
 	Close() error
@@ -65,6 +67,16 @@ func (r *redisClient) Get(ctx context.Context, key string) (string, error) {
 // Delete store value from Redis
 func (r *redisClient) Delete(ctx context.Context, key string) error {
 	return r.client.Del(ctx, key).Err()
+}
+
+// Incr increments a Redis value by 1
+func (r *redisClient) Incr(ctx context.Context, key string) (int64, error) {
+	return r.client.Incr(ctx, key).Result()
+}
+
+// Expire sets the expiration for a Redis key
+func (r *redisClient) Expire(ctx context.Context, key string, expiration time.Duration) (bool, error) {
+	return r.client.Expire(ctx, key, expiration).Result()
 }
 
 // GetClient returns the Redis client

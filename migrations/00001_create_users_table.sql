@@ -6,6 +6,7 @@ CREATE TABLE users (
     username TEXT UNIQUE,
     password_hash TEXT NOT NULL,
     is_verified BOOLEAN DEFAULT FALSE,
+    verification_token TEXT, 
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
