@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bishalcode869/Auth-as-a-Service.git/internal/models"
 	"github.com/bishalcode869/Auth-as-a-Service.git/internal/repositories"
 	"github.com/bishalcode869/Auth-as-a-Service.git/pkg/utils"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -18,7 +20,7 @@ type AuthService interface {
 	RegisterUser(username, password, email string) (*models.User, string, error)
 	LoginUser(identifier, password string) (*models.User, string, error)
 	SendVerificationCode(email string) error
-	VerifyOtp(email, opt string) error
+	VerifyOtp(email, otp string) error
 }
 
 // RedisStore defines expected methods for Redis usage
@@ -26,6 +28,8 @@ type RedisStore interface {
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 	Get(ctx context.Context, key string) (string, error)
 	Delete(ctx context.Context, key string) error
+	Incr(ctx context.Context, key string) (int64, error)
+	Expire(ctx context.Context, key string, expiration time.Duration) (bool, error)
 }
 
 type AuthServiceImpl struct {
@@ -81,6 +85,32 @@ func (s *AuthServiceImpl) userExists(username, email string) error {
 
 // SendVerificationCode generates and sends an OTP to email, storing it in Redis
 func (s *AuthServiceImpl) SendVerificationCode(email string) error {
+	// Validate email format
+	if !s.ValidateEmail(email) {
+		return fmt.Errorf("invalid email address: %s", email)
+	}
+
+	// Rate Limiting: Ensure not exceed OTP request limits
+	key := fmt.Sprintf("otp_request_count:%s", email)
+	otpCountStr, err := s.RedisClient.Get(context.Background(), key)
+	if err != nil && err != redis.Nil {
+		return fmt.Errorf("failed to retrieve OTP request count: %v", err)
+	}
+
+	// Convert OTP request count to an integer
+	otpCount := 0
+	if otpCountStr != "" {
+		otpCount, err = strconv.Atoi(otpCountStr)
+		if err != nil {
+			return fmt.Errorf("failed to convert OTP request count to integer: %v", err)
+		}
+	}
+
+	// Limit OTP request (e.g., 5 requests per hour)
+	if otpCount >= 5 {
+		return fmt.Errorf("too many OTP requests, please try again later")
+	}
+
 	code, err := s.OtpGenerator(6)
 	if err != nil {
 		return fmt.Errorf("failed to generate OTP: %v", err)
@@ -96,15 +126,25 @@ func (s *AuthServiceImpl) SendVerificationCode(email string) error {
 
 	// Store the code in Redis with expiry (e.g., 10 minutes)
 	ctx := context.Background()
-	key := fmt.Sprintf("Verify:%s", email)
-	if err := s.RedisClient.Set(ctx, key, code, 10*time.Minute); err != nil {
+	keyOtp := fmt.Sprintf("Verify:%s", email)
+	if err := s.RedisClient.Set(ctx, keyOtp, code, 10*time.Minute); err != nil {
 		return fmt.Errorf("failed to store OTP in Redis: %v", err)
+	}
+
+	// Increment OTP request count and set expiry (1 hour)
+	if _, err := s.RedisClient.Incr(ctx, key); err != nil {
+		return fmt.Errorf("failed to increment OTP request count: %v", err)
+	}
+
+	// Set expiry for OTP request count (1 hour)
+	if _, err := s.RedisClient.Expire(ctx, key, 1*time.Hour); err != nil {
+		return fmt.Errorf("failed to set OTP request count expiry: %v", err)
 	}
 
 	return nil
 }
 
-// VerifyOtp check the OTP agains Redis and verifies the user's email
+// VerifyOtp check the OTP against Redis and verifies the user's email
 func (s *AuthServiceImpl) VerifyOtp(email, otp string) error {
 	ctx := context.Background()
 	key := fmt.Sprintf("Verify:%s", email)
